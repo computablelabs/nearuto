@@ -1,6 +1,6 @@
 #[cfg(test)]
-
-use super::{Holdable, Holding};
+use crate::Holdable;
+use super::Holding;
 
 #[test]
 fn no_allowance_yet() {
@@ -9,9 +9,9 @@ fn no_allowance_yet() {
 }
 
 #[test]
-fn no_hold_yet() {
+fn no_lock_yet() {
     let h = Holding::new();
-    assert_eq!(h.held("bar"), &0);
+    assert_eq!(h.locked("bar"), &0);
 }
 
 #[test]
@@ -24,12 +24,12 @@ fn sets_initial_allowance() {
 }
 
 #[test]
-fn sets_initial_hold() {
+fn sets_initial_lock() {
     let mut h = Holding::new();
     let a: u128 = 1000000000;
-    let ok = h.increase_hold("bar", a);
+    let ok = h.lock("bar", a);
     assert_eq!(ok, true);
-    assert_eq!(h.held("bar"), &a);
+    assert_eq!(h.locked("bar"), &a);
 }
 
 #[test]
@@ -45,15 +45,15 @@ fn increase_allowance() {
 }
 
 #[test]
-fn increase_hold() {
+fn lock_is_additive() {
     let mut h = Holding::new();
     // apparently cargo is able to cast this int literal for us
-    let ok = h.increase_hold("bar", 100000);
+    let ok = h.lock("bar", 100000);
     assert_eq!(ok, true);
     let a: u128 = 50000;
-    let ok = h.increase_hold("bar", a);
+    let ok = h.lock("bar", a);
     assert_eq!(ok, true);
-    assert_eq!(h.held("bar"), &(a*3));
+    assert_eq!(h.locked("bar"), &(a*3));
 }
 
 #[test]
@@ -64,9 +64,9 @@ fn unoccupied_allowance_is_noop() {
 }
 
 #[test]
-fn unoccupied_hold_is_noop() {
+fn unoccupied_lock_is_noop() {
     let mut h = Holding::new();
-    let ok = h.decrease_hold("baz", 1000000);
+    let ok = h.unlock("baz", 1000000);
     assert_eq!(ok, false);
 }
 
@@ -80,11 +80,11 @@ fn cant_decrease_gt_allowance() {
 }
 
 #[test]
-fn cant_decrease_gt_hold() {
+fn cant_decrease_gt_lock() {
     let mut h = Holding::new();
-    let ok = h.increase_hold("bar", 1000000);
+    let ok = h.lock("bar", 1000000);
     assert_eq!(ok, true);
-    let ok = h.decrease_hold("bar", 2000000);
+    let ok = h.unlock("bar", 2000000);
     assert_eq!(ok, false);
 }
 
@@ -100,12 +100,12 @@ fn decrease_allowance() {
 }
 
 #[test]
-fn decrease_hold() {
+fn unlock() {
     let mut h = Holding::new();
-    let ok = h.increase_hold("bar", 100000);
+    let ok = h.lock("bar", 100000);
     assert_eq!(ok, true);
     let a: u128 = 50000;
-    let ok = h.decrease_hold("bar", a);
+    let ok = h.unlock("bar", a);
     assert_eq!(ok, true);
-    assert_eq!(h.held("bar"), &a);
+    assert_eq!(h.locked("bar"), &a);
 }
