@@ -23,6 +23,15 @@ fn sets_initial_allowance() {
 }
 
 #[test]
+fn no_allowance_is_err() {
+    let a: u128 = 1000000;
+    let mut h = Holding::new(a);
+    assert!(h.lock("foo", a/2).is_err());
+    assert_eq!(h.locked("foo"), &0);
+    assert_eq!(h.locks.get("foo"), None)
+}
+
+#[test]
 fn sets_initial_lock() {
     let a: u128 = 1000000;
     let mut h = Holding::new(a);
@@ -59,8 +68,35 @@ fn lock_is_additive() {
     assert!(h.increase_allowance("bar", 1000000).is_ok());
     assert!(h.lock("bar", a/3).is_ok());
     assert_eq!(h.locked("bar"), &(a/3));
+    // supply is debited
+    assert_eq!(h.supply, a - (a/3));
     assert!(h.lock("bar", a/3).is_ok());
+    // debited again...
+    assert_eq!(h.supply, a - ((a/3) * 2));
     assert_eq!(h.locked("bar"), &(1000000));
+}
+
+#[test]
+fn lock_gt_allowance_is_err() {
+    let a: u128 = 1500000;
+    let mut h = Holding::new(a);
+    assert!(h.increase_allowance("bar", 1000000).is_ok());
+    assert!(h.lock("bar", a/3).is_ok());
+    assert_eq!(h.locked("bar"), &(a/3));
+    assert!(h.lock("bar", a).is_err());
+    assert_eq!(h.locked("bar"), &(a/3));
+}
+
+#[test]
+fn lock_gt_supply_is_err() {
+    let a: u128 = 1000000;
+    let mut h = Holding::new(a);
+    // an allowance gt supply is valid
+    assert!(h.increase_allowance("foo", 2000000).is_ok());
+    assert!(h.lock("foo", a/3).is_ok());
+    assert_eq!(h.locked("foo"), &(a/3));
+    assert!(h.lock("foo", a).is_err());
+    assert_eq!(h.locked("foo"), &(a/3));
 }
 
 #[test]
@@ -89,6 +125,7 @@ fn unlock_will_not_underflow() {
     assert!(h.increase_allowance("foo", a).is_ok());
     assert!(h.lock("foo", a).is_ok());
     assert!(h.unlock("foo", a*2).is_err());
+    assert_eq!(h.locked("foo"), &a);
 }
 
 #[test]
@@ -111,10 +148,14 @@ fn decrease_allowance_below_lock_is_err() {
 
 #[test]
 fn unlock_is_subtractive() {
-    let mut h = Holding::new(1000000);
-    assert!(h.increase_allowance("bar", 100000).is_ok());
-    assert!(h.lock("bar", 100000).is_ok());
-    let a: u128 = 50000;
-    assert!(h.unlock("bar", a).is_ok());
-    assert_eq!(h.locked("bar"), &a);
+    let a: u128 = 1000000;
+    let mut h = Holding::new(a);
+    assert!(h.increase_allowance("bar", a).is_ok());
+    assert!(h.lock("bar", a).is_ok());
+    // supply was debited
+    assert_eq!(h.supply, 0);
+    assert!(h.unlock("bar", a/2).is_ok());
+    // supply is credited
+    assert_eq!(h.supply, a/2);
+    assert_eq!(h.locked("bar"), &(a/2));
 }

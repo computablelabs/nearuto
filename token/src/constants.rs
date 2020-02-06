@@ -1,3 +1,4 @@
+// TODO uint8 binary arrays?
 pub const WOULD_OVERFLOW: &str = "operation would overflow target integer type";
 pub const WOULD_UNDERFLOW: &str = "operation would underflow target integer type";
 pub const UNOCCUPIED_ENTRY: &str = "no entry exists in the target HashMap for the given key";
